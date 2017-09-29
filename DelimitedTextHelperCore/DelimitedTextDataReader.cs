@@ -1,13 +1,15 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace DelimitedTextHelperCore
 {
-    public class DelimitedTextDataReader: IDataReader
+    public class DelimitedTextDataReader:DbDataReader, IDataReader
     {
         private DelimitedTextReader _reader;
         private bool _isDone;
@@ -16,7 +18,7 @@ namespace DelimitedTextHelperCore
             this._reader = textReader;
         }
 
-        public object this[string name]
+        public override object this[string name]
         {
             get
             {
@@ -25,7 +27,7 @@ namespace DelimitedTextHelperCore
             }
         }
 
-        public object this[int i]
+        public override object this[int i]
         {
             get
             {
@@ -33,7 +35,7 @@ namespace DelimitedTextHelperCore
             }
         }
 
-        public int Depth
+        public override int Depth
         {
             get
             {
@@ -41,7 +43,7 @@ namespace DelimitedTextHelperCore
             }
         }
 
-        public int FieldCount
+        public override int FieldCount
         {
             get
             {
@@ -49,7 +51,7 @@ namespace DelimitedTextHelperCore
             }
         }
 
-        public bool IsClosed
+        public override bool IsClosed
         {
             get
             {
@@ -57,7 +59,7 @@ namespace DelimitedTextHelperCore
             }
         }
 
-        public int RecordsAffected
+        public override int RecordsAffected
         {
             get
             {
@@ -65,102 +67,104 @@ namespace DelimitedTextHelperCore
             }
         }
 
-        public void Close()
+        public override bool HasRows => throw new NotImplementedException();
+
+        public override void Close()
         {
             _reader.Dispose();
         }
 
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
             _reader = null;
         }
 
-        public bool GetBoolean(int i)
+        public override bool GetBoolean(int i)
         {
             return _reader.GetField<bool>(i);
         }
 
-        public byte GetByte(int i)
+        public override byte GetByte(int i)
         {
             return _reader.GetField<byte>(i);
         }
 
-        public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
+        public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
         {
             throw new NotImplementedException();
         }
 
-        public char GetChar(int i)
+        public override char GetChar(int i)
         {
             return _reader.GetField<char>(i);
         }
 
-        public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
+        public override long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
         {
             throw new NotImplementedException();
         }
 
-        public IDataReader GetData(int i)
-        {
-            throw new NotImplementedException();
-        }
+        //public override IDataReader GetData(int i)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        public string GetDataTypeName(int i)
+        public override string GetDataTypeName(int i)
         {
             return "System.String";
         }
 
-        public DateTime GetDateTime(int i)
+        public override DateTime GetDateTime(int i)
         {
             return _reader.GetField<DateTime>(i);
         }
 
-        public decimal GetDecimal(int i)
+        public override decimal GetDecimal(int i)
         {
             return _reader.GetField<decimal>(i);
         }
 
-        public double GetDouble(int i)
+        public override double GetDouble(int i)
         {
             return _reader.GetField<double>(i);
         }
 
-        public Type GetFieldType(int i)
+        public override Type GetFieldType(int i)
         {
             return typeof(string);
         }
 
-        public float GetFloat(int i)
+        public override float GetFloat(int i)
         {
             return _reader.GetField<float>(i);
         }
 
-        public Guid GetGuid(int i)
+        public override Guid GetGuid(int i)
         {
             return _reader.GetField<Guid>(i);
         }
 
-        public short GetInt16(int i)
+        public override short GetInt16(int i)
         {
             return _reader.GetField<short>(i);
         }
 
-        public int GetInt32(int i)
+        public override int GetInt32(int i)
         {
             return _reader.GetField<int>(i);
         }
 
-        public long GetInt64(int i)
+        public override long GetInt64(int i)
         {
             return _reader.GetField<long>(i);
         }
 
-        public string GetName(int i)
+        public override string GetName(int i)
         {
             return _reader.FieldHeaders[i];
         }
 
-        public int GetOrdinal(string name)
+        public override int GetOrdinal(string name)
         {
             for (int i = 0; i < _reader.FieldHeaders.Length; i++)
             {
@@ -172,7 +176,7 @@ namespace DelimitedTextHelperCore
             return -1;
         }
 
-        public DataTable GetSchemaTable()
+        public override DataTable GetSchemaTable()
         {
             var dt = new DataTable();
 
@@ -219,17 +223,17 @@ namespace DelimitedTextHelperCore
             return dt;
         }
 
-        public string GetString(int i)
+        public override string GetString(int i)
         {
             return _reader.GetField<string>(i);
         }
 
-        public object GetValue(int i)
+        public override object GetValue(int i)
         {
             return _reader.GetField<string>(i);
         }
 
-        public int GetValues(object[] values)
+        public override int GetValues(object[] values)
         {
             int length = Math.Min(_reader.FieldHeaders.Length, values.Length);
             for (int i = 0; i < length; i++)
@@ -239,21 +243,26 @@ namespace DelimitedTextHelperCore
             return length;
         }
 
-        public bool IsDBNull(int i)
+        public override bool IsDBNull(int i)
         {
             return string.IsNullOrEmpty(_reader.CurrentRecord[i]) || _reader.CurrentRecord[i].ToLower() == "null";
         }
 
-        public bool NextResult()
+        public override bool NextResult()
         {
             return false;
         }
 
-        public bool Read()
+        public override bool Read()
         {
             bool RC = _reader.Read();
             _isDone = !RC;
             return RC;
+        }
+
+        public override IEnumerator GetEnumerator()
+        {
+            return new DbEnumerator(this);
         }
     }
 }
